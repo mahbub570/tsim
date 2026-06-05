@@ -930,6 +930,15 @@ def test_inverse_r_pauli():
     assert unitaries_equal_up_to_global_phase(combined, np.eye(combined.shape[0]))
 
 
+def test_inverse_spp_dag_parametric():
+    c = Circuit.from_stim_program(
+        stim.Circuit("SPP_DAG[R_PAULI(theta=0.25*pi)] X0")
+    )
+    c_inv = c.inverse()
+    combined = (c + c_inv).to_matrix()
+    assert unitaries_equal_up_to_global_phase(combined, np.eye(combined.shape[0]))
+
+
 def test_append_circuit_instruction():
     c = Circuit()
     c.append(stim.CircuitInstruction("H", [0]))

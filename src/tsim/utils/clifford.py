@@ -6,7 +6,7 @@ from fractions import Fraction
 
 import stim
 
-from tsim.core.parse import parse_parametric_tag
+from tsim.core.parse import _iter_pauli_products, parse_parametric_tag
 
 # Clifford decompositions for U3(θ, φ, λ) = R_Z(φ) · R_Y(θ) · R_Z(λ).
 # Keys: (θ_idx, φ_idx, λ_idx) where each index ∈ {0,1,2,3} is the angle in half-pi units.
@@ -192,12 +192,13 @@ def expand_clifford_rotations(source: stim.Circuit) -> stim.Circuit:
 
 def _try_spp_clifford_expansion(
     instr: stim.CircuitInstruction,
-) -> list[tuple[str, list[object]]] | None:
+) -> list[tuple[str, list[stim.GateTarget]]] | None:
     """Try to expand a tagged ``SPP`` instruction into Clifford SPP/SPP_DAG.
 
     Returns:
         List of ``(gate_name, targets)`` pairs, or ``None`` if the instruction
         is not an expandable parametric Pauli rotation.
+
     """
     if instr.name not in ("SPP", "SPP_DAG") or not instr.tag or instr.tag == "T":
         return None
@@ -207,7 +208,13 @@ def _try_spp_clifford_expansion(
         return None
 
     _, params = parsed
-    gates = parametric_to_clifford_gates(parsed[0], params)
+    effective_params = dict(params)
+    is_dag = instr.name == "SPP_DAG"
+    for _, invert in _iter_pauli_products(instr):
+        if is_dag ^ invert:
+            effective_params["theta"] = -effective_params["theta"]
+        break
+    gates = parametric_to_clifford_gates(parsed[0], effective_params)
     if gates is None:
         return None
 

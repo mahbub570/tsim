@@ -185,6 +185,23 @@ class TestStimCircuitProperty:
         assert "I[" not in stim_str
         assert "Z 0 1 2" in stim_str
 
+    def test_spp_dag_parametric_expanded(self):
+        c = Circuit.from_stim_program(
+            stim.Circuit("SPP_DAG[R_PAULI(theta=0.5*pi)] X0*Y1")
+        )
+        stim_str = str(c.stim_circuit)
+        assert "SPP_DAG X0*Y1" in stim_str
+        assert "SPP X0*Y1" not in stim_str
+
+    def test_spp_dag_parametric_matches_parsed_unitary(self):
+        c = Circuit.from_stim_program(
+            stim.Circuit("SPP_DAG[R_PAULI(theta=0.5*pi)] X0*Y1")
+        )
+        expected = Circuit.from_stim_program(stim.Circuit("SPP_DAG X0*Y1"))
+        assert _unitaries_equal_up_to_global_phase(
+            c.to_matrix(), expected.to_matrix()
+        )
+
 
 class TestIsCliffordUserTags:
     """Identity instructions with non-parametric user tags (e.g. ``I[mytag]``)

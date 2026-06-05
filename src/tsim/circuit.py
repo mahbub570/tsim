@@ -856,11 +856,16 @@ class Circuit:
                     parsed = parse_parametric_tag(instr)
                     if parsed is not None:
                         gate_name, params = parsed
-                        theta = float(-params["theta"])
-                        new_tag = f"{gate_name}(theta={theta}*pi)"
-                        result.append(
-                            "SPP", instr.targets_copy(), args, tag=new_tag
-                        )
+                        if name == "SPP_DAG":
+                            # Stim flipped SPP → SPP_DAG; undo flip by negating θ.
+                            theta = float(-params["theta"])
+                            new_tag = f"{gate_name}(theta={theta}*pi)"
+                            result.append(
+                                "SPP", instr.targets_copy(), args, tag=new_tag
+                            )
+                        else:
+                            # Stim flipped SPP_DAG → SPP; tag already correct.
+                            result.append(instr)
                         continue
 
                 result.append(instr)
