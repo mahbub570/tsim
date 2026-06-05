@@ -114,6 +114,31 @@ ROT_GATE_MATRICES = {
     "R_Z": lambda frac: np.array(
         [[np.exp(-1j * np.pi / 2 * frac), 0], [0, np.exp(1j * np.pi / 2 * frac)]]
     ),
+    # Two-qubit Pauli rotations: exp(-i * frac * pi/2 * PP)
+    "R_XX": lambda frac: np.array(
+        [
+            [np.cos(frac * np.pi / 2), 0, 0, -1j * np.sin(frac * np.pi / 2)],
+            [0, np.cos(frac * np.pi / 2), -1j * np.sin(frac * np.pi / 2), 0],
+            [0, -1j * np.sin(frac * np.pi / 2), np.cos(frac * np.pi / 2), 0],
+            [-1j * np.sin(frac * np.pi / 2), 0, 0, np.cos(frac * np.pi / 2)],
+        ]
+    ),
+    "R_YY": lambda frac: np.array(
+        [
+            [np.cos(frac * np.pi / 2), 0, 0, 1j * np.sin(frac * np.pi / 2)],
+            [0, np.cos(frac * np.pi / 2), -1j * np.sin(frac * np.pi / 2), 0],
+            [0, -1j * np.sin(frac * np.pi / 2), np.cos(frac * np.pi / 2), 0],
+            [1j * np.sin(frac * np.pi / 2), 0, 0, np.cos(frac * np.pi / 2)],
+        ]
+    ),
+    "R_ZZ": lambda frac: np.array(
+        [
+            [np.exp(-1j * frac * np.pi / 2), 0, 0, 0],
+            [0, np.exp(1j * frac * np.pi / 2), 0, 0],
+            [0, 0, np.exp(1j * frac * np.pi / 2), 0],
+            [0, 0, 0, np.exp(-1j * frac * np.pi / 2)],
+        ]
+    ),
     "U3": lambda frac_theta, frac_phi, frac_lambda: np.array(
         [
             [

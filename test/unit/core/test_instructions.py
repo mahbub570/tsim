@@ -98,6 +98,19 @@ def test_u3(frac_theta: Fraction, frac_phi: Fraction, frac_lambda: Fraction):
     assert np.allclose(result, expected)
 
 
+@pytest.mark.parametrize("frac", [Fraction(1, 5), Fraction(-1, 3), Fraction(1, 7)])
+@pytest.mark.parametrize("pauli_label", ["R_XX", "R_YY", "R_ZZ"])
+def test_r_pauli_two_qubit(frac: Fraction, pauli_label: str):
+    pauli_char = pauli_label[2]
+    paulis = [(pauli_char, 0), (pauli_char, 1)]
+    b = GraphRepresentation()
+    instructions.r_pauli(b, paulis, frac)
+    b.graph.normalize()
+    result = b.graph.to_matrix()
+    expected = ROT_GATE_MATRICES[pauli_label](frac)
+    assert np.allclose(result, expected)
+
+
 @pytest.mark.parametrize(
     "gate_func, matrix",
     [

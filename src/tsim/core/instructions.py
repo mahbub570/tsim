@@ -963,6 +963,31 @@ def _pauli_product_phase(
             s(b, qubit)
 
 
+def r_pauli(
+    b: GraphRepresentation,
+    paulis: list[tuple[Literal["X", "Y", "Z"], int]],
+    phase: Fraction,
+) -> None:
+    """Apply exp(-i * phase * pi/2 * P) for an arbitrary Pauli product P.
+
+    Generalises R_X / R_Y / R_Z to multi-qubit Pauli strings.
+    ``R_XX``, ``R_YY``, ``R_ZZ`` are two-qubit special cases.
+
+    Args:
+        b: The graph representation to modify.
+        paulis: List of (pauli_type, qubit) pairs defining the Pauli product P.
+        phase: Rotation angle in units of π  (α means exp(-i α π/2 P)).
+
+    """
+    _pauli_product_phase(
+        b,
+        paulis,
+        lambda b_, q: r_z(b_, q, phase),
+        lambda b_, q: r_z(b_, q, -phase),
+        dagger=False,
+    )
+
+
 def spp(
     b: GraphRepresentation,
     paulis: list[tuple[Literal["X", "Y", "Z"], int]],

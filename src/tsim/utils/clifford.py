@@ -84,6 +84,20 @@ def parametric_to_clifford_gates(
         table = {"R_Z": RZ_CLIFFORD, "R_X": RX_CLIFFORD, "R_Y": RY_CLIFFORD}[gate_name]
         return [table[idx]]
 
+    if gate_name in ("R_XX", "R_YY", "R_ZZ", "R_PAULI"):
+        idx = _to_half_pi_index(params["theta"])
+        if idx is None:
+            return None
+        # Clifford-angle Pauli rotations map to SPP / SPP_DAG / identity
+        # idx=0 → I, idx=1 → SPP, idx=2 → SPP·SPP, idx=3 → SPP_DAG
+        _SPP_CLIFFORD: dict[int, list[str]] = {
+            0: [],
+            1: ["SPP"],
+            2: ["SPP", "SPP"],
+            3: ["SPP_DAG"],
+        }
+        return _SPP_CLIFFORD[idx]
+
     if gate_name == "U3":
         theta_idx = _to_half_pi_index(params["theta"])
         phi_idx = _to_half_pi_index(params["phi"])
@@ -118,6 +132,13 @@ def is_clifford(source: stim.Circuit) -> bool:
 
         if instr.name in ["S", "S_DAG", "SPP", "SPP_DAG"] and instr.tag == "T":
             return False
+
+        if instr.name in ["SPP", "SPP_DAG"] and instr.tag and instr.tag != "T":
+            result = parse_parametric_tag(instr)
+            if result is not None:
+                _, params = result
+                if not is_half_pi_multiple(params["theta"]):
+                    return False
 
         if instr.name == "I" and instr.tag:
             result = parse_parametric_tag(instr)
@@ -154,6 +175,11 @@ def expand_clifford_rotations(source: stim.Circuit) -> stim.Circuit:
                 )
             )
             continue
+        spp_exp = _try_spp_clifford_expansion(instr)
+        if spp_exp is not None:
+            for gate_name, gate_targets in spp_exp:
+                out.append(gate_name, gate_targets, [])
+            continue
         expansion = _try_clifford_expansion(instr)
         if expansion is not None:
             gates, targets = expansion
@@ -162,6 +188,31 @@ def expand_clifford_rotations(source: stim.Circuit) -> stim.Circuit:
         else:
             out.append(instr)
     return out
+
+
+def _try_spp_clifford_expansion(
+    instr: stim.CircuitInstruction,
+) -> list[tuple[str, list[object]]] | None:
+    """Try to expand a tagged ``SPP`` instruction into Clifford SPP/SPP_DAG.
+
+    Returns:
+        List of ``(gate_name, targets)`` pairs, or ``None`` if the instruction
+        is not an expandable parametric Pauli rotation.
+    """
+    if instr.name not in ("SPP", "SPP_DAG") or not instr.tag or instr.tag == "T":
+        return None
+
+    parsed = parse_parametric_tag(instr)
+    if parsed is None:
+        return None
+
+    _, params = parsed
+    gates = parametric_to_clifford_gates(parsed[0], params)
+    if gates is None:
+        return None
+
+    targets = instr.targets_copy()
+    return [(g, targets) for g in gates] if gates else []
 
 
 def _try_clifford_expansion(

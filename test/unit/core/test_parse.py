@@ -975,6 +975,13 @@ class TestParseParametricTag:
             {"theta": Fraction(-1, 2)},
         )
 
+    def test_r_pp_tag_returns_theta(self):
+        for axis in ("R_XX", "R_YY", "R_ZZ", "R_PAULI"):
+            assert parse_parametric_tag(_instr(f"{axis}(theta=0.25*pi)")) == (
+                axis,
+                {"theta": Fraction(1, 4)},
+            )
+
     def test_non_parametric_tag_returns_none(self):
         # Tags without the name(...) shape are not parametric-looking; these are
         # used for non-parametric annotations like S[T] / SPP[T].

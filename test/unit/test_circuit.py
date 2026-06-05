@@ -850,6 +850,86 @@ def test_append():
     assert "U3(0.3, 0.24, 0.49) 0" in str(c)
 
 
+def test_append_r_xx():
+    c = Circuit()
+    c.append("R_XX", [0, 1], arg=0.25)
+    assert "R_XX(0.25) 0 1" in str(c)
+
+
+def test_append_r_yy():
+    c = Circuit()
+    c.append("R_YY", [2, 3], arg=-0.5)
+    assert "R_YY(-0.5) 2 3" in str(c)
+
+
+def test_append_r_zz():
+    c = Circuit()
+    c.append("R_ZZ", [0, 1], arg=[0.3])
+    assert "R_ZZ(0.3) 0 1" in str(c)
+
+
+def test_append_r_pauli():
+    c = Circuit()
+    c.append(
+        "R_PAULI",
+        [stim.target_x(0), stim.target_combiner(), stim.target_y(1)],
+        arg=0.25,
+    )
+    assert "R_PAULI(0.25) X0*Y1" in str(c)
+
+
+def test_append_r_xx_duplicate_qubits_raises():
+    c = Circuit()
+    with pytest.raises(ValueError, match="Duplicate target qubits"):
+        c.append("R_XX", [3, 3], arg=0.5)
+
+
+def test_append_r_xx_wrong_target_count_raises():
+    c = Circuit()
+    with pytest.raises(ValueError, match="exactly two"):
+        c.append("R_XX", [0], arg=0.5)
+
+
+def test_r_xx_shorthand():
+    c1 = Circuit("R_XX(0.25) 0 1")
+    c2 = Circuit("SPP[R_XX(theta=0.25*pi)] X0*X1")
+    assert c1._stim_circ == c2._stim_circ
+
+
+def test_r_pauli_shorthand():
+    c1 = Circuit("R_PAULI(0.25) X0*Y1")
+    c2 = Circuit("SPP[R_PAULI(theta=0.25*pi)] X0*Y1")
+    assert c1._stim_circ == c2._stim_circ
+
+
+def test_inverse_r_xx():
+    c = Circuit("R_XX(0.25) 0 1")
+    c_inv = c.inverse()
+    combined = (c + c_inv).to_matrix()
+    assert unitaries_equal_up_to_global_phase(combined, np.eye(combined.shape[0]))
+
+
+def test_inverse_r_yy():
+    c = Circuit("R_YY(-0.3) 0 1")
+    c_inv = c.inverse()
+    combined = (c + c_inv).to_matrix()
+    assert unitaries_equal_up_to_global_phase(combined, np.eye(combined.shape[0]))
+
+
+def test_inverse_r_zz():
+    c = Circuit("R_ZZ(0.5) 0 1")
+    c_inv = c.inverse()
+    combined = (c + c_inv).to_matrix()
+    assert unitaries_equal_up_to_global_phase(combined, np.eye(combined.shape[0]))
+
+
+def test_inverse_r_pauli():
+    c = Circuit("R_PAULI(0.25) X0*Y1*Z2")
+    c_inv = c.inverse()
+    combined = (c + c_inv).to_matrix()
+    assert unitaries_equal_up_to_global_phase(combined, np.eye(combined.shape[0]))
+
+
 def test_append_circuit_instruction():
     c = Circuit()
     c.append(stim.CircuitInstruction("H", [0]))

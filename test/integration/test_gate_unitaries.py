@@ -262,6 +262,43 @@ def test_tpp_z_equals_t():
     assert np.allclose(unitary, t_matrix)
 
 
+@pytest.mark.parametrize("instruction", ["R_XX", "R_YY", "R_ZZ"])
+def test_two_qubit_rot_instructions(instruction: str):
+    c = Circuit(f"""
+        R 0 1 2 3
+        H 0 1
+        CNOT 0 2 1 3
+        {instruction}(0.345) 0 1
+        M 0 1 2 3
+        """)
+    sampler = CompiledStateProbs(c)
+    mat = get_matrix(sampler)
+    expected = np.abs(ROT_GATE_MATRICES[instruction](0.345)) ** 2
+    assert np.allclose(mat, expected)
+
+
+@pytest.mark.parametrize(
+    "pauli_str, ref_key",
+    [
+        ("X0*X1", "R_XX"),
+        ("Y0*Y1", "R_YY"),
+        ("Z0*Z1", "R_ZZ"),
+    ],
+)
+def test_r_pauli_matches_two_qubit(pauli_str: str, ref_key: str):
+    c = Circuit(f"""
+        R 0 1 2 3
+        H 0 1
+        CNOT 0 2 1 3
+        R_PAULI(0.345) {pauli_str}
+        M 0 1 2 3
+        """)
+    sampler = CompiledStateProbs(c)
+    mat = get_matrix(sampler)
+    expected = np.abs(ROT_GATE_MATRICES[ref_key](0.345)) ** 2
+    assert np.allclose(mat, expected)
+
+
 def test_u3_instruction():
     c = Circuit("""
         R 0 1

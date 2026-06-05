@@ -68,6 +68,57 @@ def test_shorthand_roundtrip():
     assert stim_to_shorthand(shorthand_to_stim(text)) == text
 
 
+def test_shorthand_to_stim_r_xx():
+    text = "R_XX(0.25) 0 1"
+    expected = "SPP[R_XX(theta=0.25*pi)] X0*X1"
+    assert shorthand_to_stim(text) == expected
+
+
+def test_shorthand_to_stim_r_yy():
+    text = "R_YY(-0.5) 2 3"
+    expected = "SPP[R_YY(theta=-0.5*pi)] Y2*Y3"
+    assert shorthand_to_stim(text) == expected
+
+
+def test_shorthand_to_stim_r_zz():
+    text = "R_ZZ(0.3) 0 1"
+    expected = "SPP[R_ZZ(theta=0.3*pi)] Z0*Z1"
+    assert shorthand_to_stim(text) == expected
+
+
+def test_shorthand_to_stim_r_pauli():
+    text = "R_PAULI(0.25) X0*Y1*Z2"
+    expected = "SPP[R_PAULI(theta=0.25*pi)] X0*Y1*Z2"
+    assert shorthand_to_stim(text) == expected
+
+
+def test_stim_to_shorthand_r_xx():
+    text = "SPP[R_XX(theta=0.25*pi)] X0*X1"
+    expected = "R_XX(0.25) 0 1"
+    assert stim_to_shorthand(text) == expected
+
+
+def test_stim_to_shorthand_r_pauli():
+    text = "SPP[R_PAULI(theta=0.25*pi)] X0*Y1*Z2"
+    expected = "R_PAULI(0.25) X0*Y1*Z2"
+    assert stim_to_shorthand(text) == expected
+
+
+def test_shorthand_roundtrip_r_xx():
+    text = "R_XX(0.25) 0 1"
+    assert stim_to_shorthand(shorthand_to_stim(text)) == text
+
+
+def test_shorthand_roundtrip_r_pauli():
+    text = "R_PAULI(0.25) X0*Y1*Z2"
+    assert stim_to_shorthand(shorthand_to_stim(text)) == text
+
+
+def test_shorthand_r_xx_duplicate_qubits_raises():
+    with pytest.raises(ValueError, match="Duplicate target qubits"):
+        shorthand_to_stim("R_XX(0.5) 3 3")
+
+
 def test_shorthand_scientific_notation():
     result = shorthand_to_stim("R_Z(4e-4) 0")
     assert "I[R_Z(theta=0.0004*pi)]" in result
